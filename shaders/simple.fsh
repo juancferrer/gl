@@ -1,10 +1,10 @@
 #version 330 core
 
-// Ouput data
+uniform vec3 inColor; // Color vect from C++ program
 out vec3 color;
 
 void main()
 {
-    // Output color = red 
-    color = vec3(1,0,0);
+    // Output color = red
+    color = inColor;
 }

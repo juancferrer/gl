@@ -1,6 +1,5 @@
 // Include standard headers
-#include <stdio.h>
-#include <stdlib.h>
+#include <iostream>
 
 // Include GLEW
 #include <GL/glew.h>
@@ -11,19 +10,20 @@ GLFWwindow* window;
 
 // Include GLM
 #include <glm/glm.hpp>
-using namespace glm;
 
-#include "common/shader.hpp"
+#include "common/ShaderUtils.hpp"
 
 int main( void )
 {
     // Initialise GLFW
     if( !glfwInit() )
     {
-        fprintf( stderr, "Failed to initialize GLFW\n" );
+        std::cerr << "Failed to initialize GLFW\n";
+        glfwTerminate();
         return -1;
     }
 
+    // Window hints to get sick OpenGL version
     glfwWindowHint(GLFW_SAMPLES, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -32,7 +32,7 @@ int main( void )
     // Open a window and create its OpenGL context
     window = glfwCreateWindow( 1024, 768, "Triangle", NULL, NULL);
     if( window == NULL ){
-        fprintf( stderr, "Failed to open GLFW window. If you have an Intel GPU, they are not 3.3 compatible. Try the 2.1 version of the tutorials.\n" );
+        std::cerr << "Failed to open GLFW window. If you have an Intel GPU, they are not 3.3 compatible. Try the 2.1 version of the tutorials.\n";
         glfwTerminate();
         return -1;
     }
@@ -41,7 +41,7 @@ int main( void )
     // Initialize GLEW
     glewExperimental = true; // Needed for core profile
     if (glewInit() != GLEW_OK) {
-        fprintf(stderr, "Failed to initialize GLEW\n");
+        std::cerr << "Failed to initialize GLEW\n";
         return -1;
     }
 
@@ -49,38 +49,54 @@ int main( void )
     glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
 
     // Dark blue background
-    glClearColor(0.0f, 0.0f, 0.4f, 0.0f);
+    glClearColor(0.0f, 0.0f, 0.3f, 0.0f);
 
-    GLuint VertexArrayID;
-    glGenVertexArrays(1, &VertexArrayID);
-    glBindVertexArray(VertexArrayID);
+    // Load the shaders
+    GLuint vertexShader = ShaderUtils::shaderFromFile("shaders/simple.vsh", GL_VERTEX_SHADER);
+    GLuint fragmentShader = ShaderUtils::shaderFromFile("shaders/simple.fsh", GL_FRAGMENT_SHADER);
 
-    // Create and compile our GLSL program from the shaders
-    GLuint programID = LoadShaders( "shaders/simple.vsh", "shaders/simple.fsh" );
+    // Create the program and link shaders to program
+    GLuint shaderProgram = glCreateProgram();
+    glAttachShader(shaderProgram, vertexShader);
+    glAttachShader(shaderProgram, fragmentShader);
+    glLinkProgram(shaderProgram);
+
+    // Use our program
+    glUseProgram(shaderProgram);
+
+    // Setup the VAO
+    GLuint vao;
+    glGenVertexArrays(1, &vao);
+    glBindVertexArray(vao);
 
 
-    static const GLfloat g_vertex_buffer_data[] = { 
+    // The data for the triangle
+    static const GLfloat triangleVertices[] = {
         -1.0f, -1.0f, 0.0f,
          1.0f, -1.0f, 0.0f,
          0.0f,  1.0f, 0.0f,
     };
 
-    GLuint vertexbuffer;
-    glGenBuffers(1, &vertexbuffer);
-    glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), g_vertex_buffer_data, GL_STATIC_DRAW);
+    GLuint triangleVBO;
+    glGenBuffers(1, &triangleVBO);
+    glBindBuffer(GL_ARRAY_BUFFER, triangleVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(triangleVertices), triangleVertices, GL_STATIC_DRAW);
+
+    GLsizei windowWidth, windowHeight;
 
     do{
 
         // Clear the screen
         glClear( GL_COLOR_BUFFER_BIT );
 
-        // Use our shader
-        glUseProgram(programID);
+        // Get the current window size, and set the viewport to be that size
+        glfwGetWindowSize(window, &windowWidth, &windowHeight);
+        glViewport(0, 0, windowWidth, windowHeight);
+
 
         // 1rst attribute buffer : vertices
         glEnableVertexAttribArray(0);
-        glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
+        glBindBuffer(GL_ARRAY_BUFFER, triangleVBO);
         glVertexAttribPointer(
             0,                  // attribute 0. No particular reason for 0, but must match the layout in the shader.
             3,                  // size
@@ -107,8 +123,8 @@ int main( void )
     glfwTerminate();
 
     // Cleanup VBO
-    glDeleteBuffers(1, &vertexbuffer);
-    glDeleteVertexArrays(1, &VertexArrayID);
+    glDeleteBuffers(1, &triangleVBO);
+    glDeleteVertexArrays(1, &vao);
 
     return 0;
 }

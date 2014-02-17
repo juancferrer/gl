@@ -6,8 +6,6 @@ add_definitions(
 	-D_CRT_SECURE_NO_WARNINGS
 )
 
-
-
 ### GLFW ###
 add_subdirectory (glfw-3.0.4)
 include_directories(

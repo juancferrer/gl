@@ -14,7 +14,7 @@ add_subdirectory (deps)
 
 include_directories(
     deps/glfw-3.0.4/include/GLFW/
-    deps/glm-0.9.5.2/
+    deps/glm-0.9.5.2/glm
     deps/glew-1.10.0/include/
 )
 

@@ -10,6 +10,7 @@ GLFWwindow* window;
 
 // Include GLM
 #include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 
 #include "common/ShaderUtils.hpp"
 
@@ -73,13 +74,13 @@ int main( void )
     // The data for the triangle
     static const GLfloat triangleVertices[] = {
         // Triangle vertices
-        -1.0f, -1.0f, 0.0f, // Bottom left
-         1.0f, -1.0f, 0.0f, // Bottom right
-         0.0f,  1.0f, 0.0f, // Top
+        -1.0f, -1.0f, 0.0f, 1.0f, // Bottom left
+         1.0f, -1.0f, 0.0f, 1.0f, // Bottom right
+         0.0f,  1.0f, 0.0f, 1.0f, // Top
         // Vertex color
-         1.0f,  0.0f, 0.0f, // Red
-         0.0f,  1.0f, 0.0f, // Green
-         0.0f,  0.0f, 1.0f, // Blue
+         1.0f,  0.0f, 0.0f, 1.0f, // Red
+         0.0f,  1.0f, 0.0f, 1.0f, // Green
+         0.0f,  0.0f, 1.0f, 1.0f, // Blue
     };
 
     // Create the VBO and bind the triangle data  to it
@@ -93,7 +94,7 @@ int main( void )
     // Vertex attrib
     glVertexAttribPointer(
         0,                  // attribute 0, vertices
-        3,                  // size
+        4,                  // size
         GL_FLOAT,           // type
         GL_FALSE,           // normalized?
         0,                  // stride
@@ -102,15 +103,33 @@ int main( void )
     // Color attrib
     glVertexAttribPointer(
         1,                  // attribute 1, colors
-        3,                  // size
+        4,                  // size
         GL_FLOAT,           // type
         GL_FALSE,           // normalized?
         0,                  // stride
-        (void*)(sizeof(float)*3*3) // array buffer offset sizeof(float) * Num floats in vec3 * Num vertices
+        (void*)(sizeof(float)*4*3) // array buffer offset sizeof(float) * Num floats in vec4 * Num vertices
     );
 
     GLsizei windowWidth, windowHeight;
+    glfwGetWindowSize(window, &windowWidth, &windowHeight);
     GLint blinkingColorPtr = glGetUniformLocation(shaderProgram, "blinkingColor");
+
+    // Projection matrix : 45° Field of View, 4:3 ratio, display range : 0.1 unit <-> 100 units
+    glm::mat4 projMat = glm::perspective(45.0f, (float)(windowWidth / windowHeight), 0.1f, 100.0f);
+
+    // Camera matrix
+    glm::mat4 camMat  = glm::lookAt(
+        glm::vec3(4,3,3), // Camera is at (4,3,3), in World Space
+        glm::vec3(0,0,0), // and looks at the origin
+        glm::vec3(0,1,0)  // Head is up (set to 0,-1,0 to look upside-down)
+    );
+    // Model matrix : an identity matrix (model will be at the origin)
+    glm::mat4 modelMat = glm::mat4(1.0f);  // Changes for each model !
+    // Our ModelViewProjection : multiplication of our 3 matrices
+    glm::mat4 mvpMat = projMat * camMat * modelMat; // Remember, matrix multiplication is the other way around
+
+    GLuint mvpMatPtr = glGetUniformLocation(shaderProgram, "mvpMat");
+    glUniformMatrix4fv(mvpMatPtr, 1, GL_FALSE, &mvpMat[0][0]);
 
     do{
 
@@ -122,7 +141,7 @@ int main( void )
         glViewport(0, 0, windowWidth, windowHeight);
 
         GLfloat foo = std::abs(std::sin(glfwGetTime()));
-        glUniform3f(blinkingColorPtr, foo, foo, foo); // Set the blinking color to Sin(time)
+        glUniform4f(blinkingColorPtr, foo, foo, foo, 1.0); // Set the blinking color to Sin(time)
         // Draw the triangle !
         glDrawArrays(GL_TRIANGLES, 0, 3); // 3 indices starting at 0 -> 1 triangle
 

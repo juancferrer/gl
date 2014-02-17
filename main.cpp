@@ -72,29 +72,44 @@ int main( void )
 
     // The data for the triangle
     static const GLfloat triangleVertices[] = {
-        -1.0f, -1.0f, 0.0f,
-         1.0f, -1.0f, 0.0f,
-         0.0f,  1.0f, 0.0f,
+        // Triangle vertices
+        -1.0f, -1.0f, 0.0f, // Bottom left
+         1.0f, -1.0f, 0.0f, // Bottom right
+         0.0f,  1.0f, 0.0f, // Top
+        // Vertex color
+         1.0f,  0.0f, 0.0f, // Red
+         0.0f,  1.0f, 0.0f, // Green
+         0.0f,  0.0f, 1.0f, // Blue
     };
 
+    // Create the VBO and bind the triangle data  to it
     GLuint triangleVBO;
     glGenBuffers(1, &triangleVBO);
     glBindBuffer(GL_ARRAY_BUFFER, triangleVBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(triangleVertices), triangleVertices, GL_STATIC_DRAW);
 
     glEnableVertexAttribArray(0);
-    glBindBuffer(GL_ARRAY_BUFFER, triangleVBO);
+    glEnableVertexAttribArray(1);
+    // Vertex attrib
     glVertexAttribPointer(
-        0,                  // attribute 0. No particular reason for 0, but must match the layout in the shader.
+        0,                  // attribute 0, vertices
         3,                  // size
         GL_FLOAT,           // type
         GL_FALSE,           // normalized?
         0,                  // stride
         (void*)0            // array buffer offset
     );
+    // Color attrib
+    glVertexAttribPointer(
+        1,                  // attribute 1, colors
+        3,                  // size
+        GL_FLOAT,           // type
+        GL_FALSE,           // normalized?
+        0,                  // stride
+        (void*)(sizeof(float)*3*3) // array buffer offset sizeof(float) * Num floats in vec3 * Num vertices
+    );
 
     GLsizei windowWidth, windowHeight;
-    GLint colorPtr = glGetUniformLocation(shaderProgram, "inColor");
 
     do{
 
@@ -104,9 +119,6 @@ int main( void )
         // Get the current window size, and set the viewport to be that size
         glfwGetWindowSize(window, &windowWidth, &windowHeight);
         glViewport(0, 0, windowWidth, windowHeight);
-
-        float foo = glm::abs(glm::sin(glfwGetTime()));
-        glUniform3f(colorPtr, foo, foo, foo);
 
         // Draw the triangle !
         glDrawArrays(GL_TRIANGLES, 0, 3); // 3 indices starting at 0 -> 1 triangle

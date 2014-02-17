@@ -39,7 +39,7 @@ GLuint shaderFromFile(const char * path, GLenum shaderType){
     if ( logLength > 0 ){
         GLchar *log = new GLchar[logLength + 1];
         glGetShaderInfoLog(shaderID, logLength, NULL, log);
-        std::cout << &log << std::endl;
+        std::cout << log << std::endl;
     }
     return shaderID;
 }

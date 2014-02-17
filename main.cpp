@@ -110,6 +110,7 @@ int main( void )
     );
 
     GLsizei windowWidth, windowHeight;
+    GLint blinkingColorPtr = glGetUniformLocation(shaderProgram, "blinkingColor");
 
     do{
 
@@ -120,6 +121,8 @@ int main( void )
         glfwGetWindowSize(window, &windowWidth, &windowHeight);
         glViewport(0, 0, windowWidth, windowHeight);
 
+        GLfloat foo = std::abs(std::sin(glfwGetTime()));
+        glUniform3f(blinkingColorPtr, foo, foo, foo); // Set the blinking color to Sin(time)
         // Draw the triangle !
         glDrawArrays(GL_TRIANGLES, 0, 3); // 3 indices starting at 0 -> 1 triangle
 

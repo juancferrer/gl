@@ -74,13 +74,13 @@ int main( void )
     // The data for the triangle
     static const GLfloat triangleVertices[] = {
         // Triangle vertices
-        -1.0f, -1.0f, 0.0f, 1.0f, // Bottom left
-         1.0f, -1.0f, 0.0f, 1.0f, // Bottom right
-         0.0f,  1.0f, 0.0f, 1.0f, // Top
+        -1.0f, -1.0f, 0.0f,  // Bottom left
+         1.0f, -1.0f, 0.0f,  // Bottom right
+         0.0f,  1.0f, 0.0f,  // Top
         // Vertex color
-         1.0f,  0.0f, 0.0f, 1.0f, // Red
-         0.0f,  1.0f, 0.0f, 1.0f, // Green
-         0.0f,  0.0f, 1.0f, 1.0f, // Blue
+         1.0f,  0.0f, 0.0f, // Red
+         0.0f,  1.0f, 0.0f, // Green
+         0.0f,  0.0f, 1.0f, // Blue
     };
 
     // Create the VBO and bind the triangle data  to it
@@ -94,7 +94,7 @@ int main( void )
     // Vertex attrib
     glVertexAttribPointer(
         0,                  // attribute 0, vertices
-        4,                  // size
+        3,                  // size
         GL_FLOAT,           // type
         GL_FALSE,           // normalized?
         0,                  // stride
@@ -103,11 +103,11 @@ int main( void )
     // Color attrib
     glVertexAttribPointer(
         1,                  // attribute 1, colors
-        4,                  // size
+        3,                  // size
         GL_FLOAT,           // type
         GL_FALSE,           // normalized?
         0,                  // stride
-        (void*)(sizeof(float)*4*3) // array buffer offset sizeof(float) * Num floats in vec4 * Num vertices
+        (void*)(sizeof(float)*3*3) // array buffer offset sizeof(float) * Num floats in vec3 * Num vertices
     );
 
     GLsizei windowWidth, windowHeight;
@@ -141,7 +141,7 @@ int main( void )
         glViewport(0, 0, windowWidth, windowHeight);
 
         GLfloat foo = std::abs(std::sin(glfwGetTime()));
-        glUniform4f(blinkingColorPtr, foo, foo, foo, 1.0); // Set the blinking color to Sin(time)
+        glUniform3f(blinkingColorPtr, foo, foo, foo); // Set the blinking color to Sin(time)
         // Draw the triangle !
         glDrawArrays(GL_TRIANGLES, 0, 3); // 3 indices starting at 0 -> 1 triangle
 

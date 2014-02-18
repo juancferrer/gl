@@ -1,8 +1,8 @@
 #version 330 core
 
-in vec4 theColor; // Color vect from vertex shader...Ignore it, use blinking
-uniform vec4 blinkingColor;
-out vec4 outColor;
+in vec3 theColor; // Color vect from vertex shader...Ignore it, use blinking
+uniform vec3 blinkingColor;
+out vec3 outColor;
 
 void main()
 {

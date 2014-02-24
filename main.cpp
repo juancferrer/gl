@@ -5,7 +5,7 @@
 #include <glfw3.h>
 
 #include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/transform.hpp>
 
 #include <opencv2/opencv.hpp>
 using namespace cv;
@@ -76,7 +76,7 @@ void initGLStuff(){
     glEnable(GL_CULL_FACE);
 }
 
-GLuint initTexture(){
+GLuint initTexture(const char *texturePath){
     // Setup the texture
     GLuint texturePtr;
     glGenTextures(1, &texturePtr);
@@ -85,7 +85,7 @@ GLuint initTexture(){
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    cv::Mat textureData = cv::imread("models/monkey.png", CV_LOAD_IMAGE_COLOR);
+    cv::Mat textureData = cv::imread(texturePath, CV_LOAD_IMAGE_COLOR);
     cv::flip(textureData, textureData, 0); // Flip the image upside down for OpenGL
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, textureData.cols, textureData.rows, 0, GL_BGR, GL_UNSIGNED_BYTE, textureData.data);
     return texturePtr;
@@ -143,41 +143,50 @@ int main( void ){
     initGLStuff();
 
     GLuint shaderProgram = initShaderProgram();
-    GLuint texturePtr = initTexture();
-    GLuint vao = initVAO();
 
-    // Create the model, and load the model data into model VBO
-    ObjModel model = ObjModel("models/monkey.obj");
-    GLuint modelVBO = initModelVBO(model);
-
+    // Create the monkey model, and load the model data into model VBO
+    GLuint monkeyVAO = initVAO();
+    ObjModel monkeyModel = ObjModel("models/monkey.obj");
+    GLuint monkeyVBO = initModelVBO(monkeyModel);
     // Create the texture VBO
-    GLuint texelsVBO = initTexelsVBO(model);
+    GLuint monkeyTexturePtr = initTexture("models/monkey.png");
+    GLuint monkeyTexelsVBO = initTexelsVBO(monkeyModel);
+
+
+    // Create the cube model, and load the model data into model VBO
+    GLuint cubeVAO = initVAO();
+    ObjModel cubeModel = ObjModel("models/cube.obj");
+    GLuint cubeVBO = initModelVBO(cubeModel);
+    // Create the texture VBO
+    GLuint cubeTexturePtr = initTexture("models/cube.png");
+    GLuint cubeTexelsVBO = initTexelsVBO(cubeModel);
+
 
     // Get the texture sampler
-    GLuint samplerPtr = glGetUniformLocation(shaderProgram, "sampler");
-    glUniform1i(samplerPtr, 0); // Set sampler in fragment shader to 0
+    GLuint textureSampler = glGetUniformLocation(shaderProgram, "sampler");
+    glUniform1i(textureSampler, 0); // Set sampler in fragment shader to 0
 
     // Projection matrix : 45° Field of View, 4:3 ratio, display range : 0.1 unit <-> 100 units
     glm::mat4 projMat = glm::perspective(45.0f, (float)(windowWidth / windowHeight), 0.1f, 100.0f);
-    // Model matrix : an identity matrix (model will be at the origin)
-    glm::mat4 modelMat = glm::mat4(1.0f);  // Changes for each model !
 
     // Ptr to matrix projection inside vertex shader
     GLuint mvpMatPtr = glGetUniformLocation(shaderProgram, "mvpMat");
 
     do{
-
         float xPos = glm::cos(glfwGetTime());
         float zPos = glm::sin(glfwGetTime());
         // Camera matrix
         glm::mat4 camMat  = glm::lookAt(
-            glm::vec3(5 * xPos, 5 * xPos, 5 * zPos), // Camera is at (4,3,3), in World Space
+            glm::vec3(5 * xPos, 5 * xPos, 5 * zPos), // Camera is circling model
             glm::vec3(0,0,0), // and looks at the origin
             glm::vec3(0,1,0)  // Head is up (set to 0,-1,0 to look upside-down)
         );
-        // Our ModelViewProjection : multiplication of our 3 matrices
-        glm::mat4 mvpMat = projMat * camMat * modelMat; // Remember, matrix multiplication is the other way around
-        glUniformMatrix4fv(mvpMatPtr, 1, GL_FALSE, &mvpMat[0][0]); // Update the projection inside the shader
+
+        // Monkey model at origin
+        glm::mat4 monkeyModelMat = glm::mat4(1.0f);  // Identity matrix (model is at origin)
+
+        // Cube model at 0,-2,0 (below monkey)
+        glm::mat4 cubeModelMat = glm::translate(0.0f, -2.0f, 0.0f);
 
         // Clear the screen
         glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -186,8 +195,19 @@ int main( void ){
         glfwGetWindowSize(window, &windowWidth, &windowHeight);
         glViewport(0, 0, windowWidth, windowHeight);
 
-        // Draw the triangle !
-        glDrawArrays(GL_TRIANGLES, 0, model.verticesCount * 3); // 3 indices starting at 0 -> 1 triangle
+        // Draw the monkey
+        glBindVertexArray(monkeyVAO);
+        glm::mat4 mvpMonkeyMat = projMat * camMat * monkeyModelMat;
+        glUniformMatrix4fv(mvpMatPtr, 1, GL_FALSE, &mvpMonkeyMat[0][0]); // Update the projection inside the shader
+        glBindTexture(GL_TEXTURE_2D, monkeyTexturePtr);
+        glDrawArrays(GL_TRIANGLES, 0, monkeyModel.verticesCount * 3);
+
+        // Draw the cube
+        glBindVertexArray(cubeVAO);
+        glm::mat4 mvpCubeMat = projMat * camMat * cubeModelMat;
+        glUniformMatrix4fv(mvpMatPtr, 1, GL_FALSE, &mvpCubeMat[0][0]); // Update the projection inside the shader
+        glBindTexture(GL_TEXTURE_2D, cubeTexturePtr);
+        glDrawArrays(GL_TRIANGLES, 0, cubeModel.verticesCount * 3);
 
         // Swap buffers
         glfwSwapBuffers(window);
@@ -201,7 +221,7 @@ int main( void ){
     glfwTerminate();
 
     // Cleanup VBO
-    glDeleteBuffers(1, &modelVBO);
-    glDeleteVertexArrays(1, &vao);
+    glDeleteBuffers(1, &monkeyVBO);
+    glDeleteVertexArrays(1, &monkeyVAO);
     return 0;
 }

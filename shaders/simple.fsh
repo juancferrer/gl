@@ -1,10 +1,13 @@
 #version 330 core
 
-in vec3 theColor; // Color vect from vertex shader...Ignore it, use blinking
-uniform vec3 blinkingColor;
+in vec2 UV;
+
+uniform sampler2D sampler;
+
 out vec3 outColor;
+
 
 void main()
 {
-    outColor = blinkingColor;
+    outColor = texture2D(sampler, UV).rgb;
 }

@@ -72,7 +72,7 @@ void initGLStuff(){
     glClearColor(0.0f, 0.0f, 0.3f, 0.0f);
     // Turn on cool stuff
     glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_LESS);
+    glDepthFunc(GL_LEQUAL);
     glEnable(GL_CULL_FACE);
 }
 
@@ -103,7 +103,7 @@ GLuint initModelVBO(ObjModel model){
     GLuint modelVBO;
     glGenBuffers(1, &modelVBO);
     glBindBuffer(GL_ARRAY_BUFFER, modelVBO);
-    glBufferData(GL_ARRAY_BUFFER, model.verticesCount * 12, model.positions, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, model.vertices.size() * sizeof(glm::vec3), &model.vertices[0], GL_STATIC_DRAW);
 
     // Vertex attrib
     glEnableVertexAttribArray(0);
@@ -124,7 +124,7 @@ GLuint initTexelsVBO(ObjModel model){
     GLuint texelsVBO;
     glGenBuffers(1, &texelsVBO);
     glBindBuffer(GL_ARRAY_BUFFER, texelsVBO);
-    glBufferData(GL_ARRAY_BUFFER, model.verticesCount * 9 , model.texels, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, model.uvs.size() * sizeof(glm::vec2) , &model.uvs[0], GL_STATIC_DRAW);
 
     // Texture attrib
     glEnableVertexAttribArray(1);
@@ -200,14 +200,14 @@ int main( void ){
         glm::mat4 mvpMonkeyMat = projMat * camMat * monkeyModelMat;
         glUniformMatrix4fv(mvpMatPtr, 1, GL_FALSE, &mvpMonkeyMat[0][0]); // Update the projection inside the shader
         glBindTexture(GL_TEXTURE_2D, monkeyTexturePtr);
-        glDrawArrays(GL_TRIANGLES, 0, monkeyModel.verticesCount * 3);
+        glDrawArrays(GL_TRIANGLES, 0, monkeyModel.vertices.size());
 
         // Draw the cube
         glBindVertexArray(cubeVAO);
         glm::mat4 mvpCubeMat = projMat * camMat * cubeModelMat;
         glUniformMatrix4fv(mvpMatPtr, 1, GL_FALSE, &mvpCubeMat[0][0]); // Update the projection inside the shader
         glBindTexture(GL_TEXTURE_2D, cubeTexturePtr);
-        glDrawArrays(GL_TRIANGLES, 0, cubeModel.verticesCount * 3);
+        glDrawArrays(GL_TRIANGLES, 0, cubeModel.vertices.size());
 
         // Swap buffers
         glfwSwapBuffers(window);

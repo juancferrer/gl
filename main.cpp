@@ -76,62 +76,6 @@ void initGLStuff(){
     glEnable(GL_CULL_FACE);
 }
 
-GLuint initTexture(const char *texturePath){
-    // Setup the texture
-    GLuint texturePtr;
-    glGenTextures(1, &texturePtr);
-    glBindTexture(GL_TEXTURE_2D, texturePtr);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    cv::Mat textureData = cv::imread(texturePath, CV_LOAD_IMAGE_COLOR);
-    cv::flip(textureData, textureData, 0); // Flip the image upside down for OpenGL
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, textureData.cols, textureData.rows, 0, GL_BGR, GL_UNSIGNED_BYTE, textureData.data);
-    return texturePtr;
-}
-
-GLuint initVAO(){
-    // Setup the VAO
-    GLuint vao;
-    glGenVertexArrays(1, &vao);
-    glBindVertexArray(vao);
-    return vao;
-}
-
-GLuint initModelVBO(ObjModel model){
-    GLuint modelVBO;
-    glGenBuffers(1, &modelVBO);
-    glBindBuffer(GL_ARRAY_BUFFER, modelVBO);
-    glBufferData(GL_ARRAY_BUFFER, model.vertices.size() * sizeof(glm::vec3), &model.vertices[0], GL_STATIC_DRAW);
-
-    // Vertex attrib
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(
-        0,                  // attribute 0, vertices
-        3,                  // size
-        GL_FLOAT,           // type
-        GL_FALSE,           // normalized?
-        0,                  // stride
-        (void*)0            // array buffer offset
-    );
-    return modelVBO;
-}
-
-GLuint initTexelsVBO(ObjModel model){
-
-    // Create the texels VBO and bind texture data to it
-    GLuint texelsVBO;
-    glGenBuffers(1, &texelsVBO);
-    glBindBuffer(GL_ARRAY_BUFFER, texelsVBO);
-    glBufferData(GL_ARRAY_BUFFER, model.uvs.size() * sizeof(glm::vec2) , &model.uvs[0], GL_STATIC_DRAW);
-
-    // Texture attrib
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
-    return texelsVBO;
-}
-
 int main( void ){
     initGLFW();
     GLFWwindow *window = initWindow();
@@ -144,23 +88,11 @@ int main( void ){
 
     GLuint shaderProgram = initShaderProgram();
 
-    // Create the monkey model, and load the model data into model VBO
-    GLuint monkeyVAO = initVAO();
-    ObjModel monkeyModel = ObjModel("models/monkey.obj");
-    GLuint monkeyVBO = initModelVBO(monkeyModel);
-    // Create the texture VBO
-    GLuint monkeyTexturePtr = initTexture("models/monkey.png");
-    GLuint monkeyTexelsVBO = initTexelsVBO(monkeyModel);
+    // Create the monkey model
+    ObjModel monkeyModel = ObjModel("models/monkey.obj", "models/monkey.png");
 
-
-    // Create the cube model, and load the model data into model VBO
-    GLuint cubeVAO = initVAO();
-    ObjModel cubeModel = ObjModel("models/cube.obj");
-    GLuint cubeVBO = initModelVBO(cubeModel);
-    // Create the texture VBO
-    GLuint cubeTexturePtr = initTexture("models/cube.png");
-    GLuint cubeTexelsVBO = initTexelsVBO(cubeModel);
-
+    // Create the cube model
+    ObjModel cubeModel = ObjModel("models/cube.obj", "models/cube.png");
 
     // Get the texture sampler
     GLuint textureSampler = glGetUniformLocation(shaderProgram, "sampler");
@@ -196,17 +128,17 @@ int main( void ){
         glViewport(0, 0, windowWidth, windowHeight);
 
         // Draw the monkey
-        glBindVertexArray(monkeyVAO);
+        glBindVertexArray(monkeyModel.vao);
         glm::mat4 mvpMonkeyMat = projMat * camMat * monkeyModelMat;
         glUniformMatrix4fv(mvpMatPtr, 1, GL_FALSE, &mvpMonkeyMat[0][0]); // Update the projection inside the shader
-        glBindTexture(GL_TEXTURE_2D, monkeyTexturePtr);
+        glBindTexture(GL_TEXTURE_2D, monkeyModel.texturePtr);
         glDrawArrays(GL_TRIANGLES, 0, monkeyModel.vertices.size());
 
         // Draw the cube
-        glBindVertexArray(cubeVAO);
+        glBindVertexArray(cubeModel.vao);
         glm::mat4 mvpCubeMat = projMat * camMat * cubeModelMat;
         glUniformMatrix4fv(mvpMatPtr, 1, GL_FALSE, &mvpCubeMat[0][0]); // Update the projection inside the shader
-        glBindTexture(GL_TEXTURE_2D, cubeTexturePtr);
+        glBindTexture(GL_TEXTURE_2D, cubeModel.texturePtr);
         glDrawArrays(GL_TRIANGLES, 0, cubeModel.vertices.size());
 
         // Swap buffers
@@ -221,7 +153,9 @@ int main( void ){
     glfwTerminate();
 
     // Cleanup VBO
+    /*
     glDeleteBuffers(1, &monkeyVBO);
     glDeleteVertexArrays(1, &monkeyVAO);
+    */
     return 0;
 }

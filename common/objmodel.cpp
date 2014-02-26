@@ -6,11 +6,24 @@
 #include <cstdlib>
 using namespace std;
 
+#include <opencv2/opencv.hpp>
+using namespace cv;
+
 #include "objmodel.h"
 
-ObjModel::ObjModel(string path){
+ObjModel::ObjModel(string objPath, string texturePath)
+    :objPath(objPath), texturePath(texturePath){
+    initBuffers();
+    initVAO();
+    initTexture();
+    initModelVBO();
+    initTextureVBO();
+    initNormalVBO();
+}
+
+void ObjModel::initBuffers(){
     std::vector< unsigned int > vertexIndices, uvIndices, normalIndices;
-    ifstream inFile(path.c_str());
+    ifstream inFile(objPath.c_str());
     string line;
     string type;
 
@@ -81,4 +94,55 @@ ObjModel::ObjModel(string path){
     cout << "N1: " << objNormals[0].x << "x " << objNormals[0].y << "y " << objNormals[0].z << "z" << endl;
     //cout << "F1v1: " << objFaces[0].x << "p " << objFaces[0].y << "t " << objFaces[0].z << "n" << endl;
     */
+}
+
+void ObjModel::initVAO(){
+    // Setup the VAO
+    glGenVertexArrays(1, &vao);
+    glBindVertexArray(vao);
+}
+
+
+void ObjModel::initModelVBO(){
+    glGenBuffers(1, &modelVbo);
+    glBindBuffer(GL_ARRAY_BUFFER, modelVbo);
+    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glm::vec3), &vertices[0], GL_STATIC_DRAW);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(
+        0,                  // attribute 0, vertices
+        3,                  // size
+        GL_FLOAT,           // type
+        GL_FALSE,           // normalized?
+        0,                  // stride
+        (void*)0            // array buffer offset
+    );
+}
+
+void ObjModel::initTextureVBO(){
+    // Create the texels VBO and bind texture data to it
+    glGenBuffers(1, &textureVbo);
+    glBindBuffer(GL_ARRAY_BUFFER, textureVbo);
+    glBufferData(GL_ARRAY_BUFFER, uvs.size() * sizeof(glm::vec2) , &uvs[0], GL_STATIC_DRAW);
+    // Texture attrib
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
+}
+
+void ObjModel::initNormalVBO(){
+    glGenBuffers(1, &normalVbo) ;
+    glBindBuffer(GL_ARRAY_BUFFER, normalVbo);
+    glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(glm::vec3), &normals[0], GL_STATIC_DRAW);
+}
+
+void ObjModel::initTexture(){
+    // Setup the texture
+    glGenTextures(1, &texturePtr);
+    glBindTexture(GL_TEXTURE_2D, texturePtr);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    cv::Mat textureData = cv::imread(texturePath, CV_LOAD_IMAGE_COLOR);
+    cv::flip(textureData, textureData, 0); // Flip the image upside down for OpenGL
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, textureData.cols, textureData.rows, 0, GL_BGR, GL_UNSIGNED_BYTE, textureData.data);
 }

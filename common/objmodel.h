@@ -4,21 +4,31 @@
 #include <iostream>
 #include <vector>
 
+#include <GL/glew.h>
 #include <glm/glm.hpp>
 
 class ObjModel
 {
 public:
-    ObjModel(std::string path);
+    ObjModel(std::string objPath, std::string texturePath);
     std::vector< glm::vec3 > vertices;
     std::vector< glm::vec2 > uvs;
     std::vector< glm::vec3 > normals;
+    std::string objPath, texturePath;
+    GLuint vao, modelVbo, texturePtr, textureVbo, normalVbo;
 
 private:
     std::vector< glm::vec3 > objVertices;
     std::vector< glm::vec3 > objNormals;
     std::vector< glm::vec2 > objUvs;
     std::vector< glm::vec3 > objFaces;
+
+    void initBuffers();
+    void initVAO();
+    void initModelVBO();
+    void initTextureVBO();
+    void initNormalVBO();
+    void initTexture();
 };
 
 #endif // OBJMODEL_H

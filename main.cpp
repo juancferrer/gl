@@ -118,7 +118,8 @@ int main( void ){
         glm::mat4 monkeyModelMat = glm::mat4(1.0f);  // Identity matrix (model is at origin)
 
         // Cube model at 0,-2,0 (below monkey)
-        glm::mat4 cubeModelMat = glm::translate(0.0f, -2.0f, 0.0f);
+        //glm::mat4 cubeModelMat = glm::translate(0.0f, -2.0f, 0.0f);
+        glm::mat4 cubeModelMat = glm::translate(glm::vec3(0.0f, -2.0f, 0.0f));
 
         // Clear the screen
         glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

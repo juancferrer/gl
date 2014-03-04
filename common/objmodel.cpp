@@ -132,6 +132,8 @@ void ObjModel::initNormalVBO(){
     glGenBuffers(1, &normalVbo) ;
     glBindBuffer(GL_ARRAY_BUFFER, normalVbo);
     glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(glm::vec3), &normals[0], GL_STATIC_DRAW);
+    glEnableVertexAttribArray(2);
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
 }
 
 void ObjModel::initTexture(){
